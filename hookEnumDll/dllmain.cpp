@@ -58,14 +58,6 @@ LRESULT WINAPI HookProc(int nCode, WPARAM wParam, LPARAM lParam)
 extern "C" bool __declspec(dllexport) __stdcall InstallHook(HWND hWnd)
 {
 	if(!g_hHook){
-		//HHOOK SetWindowsHookExA(
-		//	int       idHook,			//钩子的类型
-		//	HOOKPROC  lpfn,				//钩子函数的地址
-		//	HINSTANCE hmod,				//包含钩子函数的模块句柄
-		//	DWORD     dwThreadId		//指定监视的线程，如果指定确定的线程，即为线程钩子，如果指定为空，则为全局钩子。
-		//	);
-		//
-		//WH_MOUSE:安装监视鼠标消息的钩子
 		g_hHook = SetWindowsHookEx(WH_MOUSE, (HOOKPROC)HookProc, g_hinstDll, 0);
 	}
 	if (!g_hHook)
@@ -84,7 +76,6 @@ extern "C" BOOL __declspec(dllexport) __stdcall UninstallHook()
 	BOOL result=false;
 	if(g_hHook) {
 		if(bHook) HookOff();
-		//UnhookWindowsHookEx函数用于将一个由函数SetWindowsHookEx安装的钩子函数从钩子链中删除（即脱钩）
 		result=UnhookWindowsHookEx(g_hHook);
 	}
 	g_hHook=NULL;
@@ -115,70 +106,51 @@ bool Init()
 	/*********************************************************************************************************************/
 
 	/**************************************  EnumChildWindows Init  *********************************************************/
-	//获取函数EnumChildWindows的地址
 	fpEnumChildWindows = GetProcAddress(hModule, "EnumChildWindows");
 	if(fpEnumChildWindows == NULL){
 		return false;
 	}
-	//新的函数指针地址
 	fpNewEnumChildWindows=(LPVOID)MyEnumChildWindows;
-	NewEnumChildWindowsCode[0] = 0xe9;//无条件转移指令jmp的机器指令（0xe9为相对跳转、0xff为绝对跳转）
+	NewEnumChildWindowsCode[0] = 0xe9;
 	
 	addr=(DWORD *)(NewEnumChildWindowsCode+1);
-	//段间的跳转指令长度为5个字节，因此JMP的指令计算公式为：目标地址-当前地址-5
 	*addr=DWORD(MyEnumChildWindows)-DWORD(fpEnumChildWindows)-5;
-	//将原始的函数现场进行保存
 	RtlMoveMemory(OldEnumChildWindowsCode, fpEnumChildWindows, 5);
 	/*********************************************************************************************************************/
 		
 	/**************************************  GetWindow Init  *********************************************************/
-	//获取函数GetWindow的地址
 	fpGetWindow = GetProcAddress(hModule, "GetWindow");
 	if(fpGetWindow == NULL){
 		return false;
 	}
-	//新的函数指针地址
 	fpNewGetWindow=(LPVOID)MyGetWindow;
-	NewGetWindowCode[0] = 0xe9;//无条件转移指令jmp的机器指令（0xe9为相对跳转、0xff为绝对跳转）
-
+	NewGetWindowCode[0] = 0xe9;
 	addr=(DWORD *)(NewGetWindowCode+1);
-	//段间的跳转指令长度为5个字节，因此JMP的指令计算公式为：目标地址-当前地址-5
 	*addr=DWORD(MyGetWindow)-DWORD(fpGetWindow)-5;
-	//将原始的函数现场进行保存
 	RtlMoveMemory(OldGetWindowCode, fpGetWindow, 5);
 	/*********************************************************************************************************************/
 
 	/**************************************  FindWindowW Init  *********************************************************/
-	//获取函数FindWindowW的地址
 	fpFindWindowW = GetProcAddress(hModule, "FindWindowW");
 	if(fpFindWindowW == NULL){
 		return false;
 	}
-	//新的函数指针地址
 	fpNewFindWindowW=(LPVOID)MyFindWindowW;
-	NewFindWindowWCode[0] = 0xe9;//无条件转移指令jmp的机器指令（0xe9为相对跳转、0xff为绝对跳转）
-
+	NewFindWindowWCode[0] = 0xe9;
 	addr=(DWORD *)(NewFindWindowWCode+1);
-	//段间的跳转指令长度为5个字节，因此JMP的指令计算公式为：目标地址-当前地址-5
 	*addr=DWORD(MyFindWindowW)-DWORD(fpFindWindowW)-5;
-	//将原始的函数现场进行保存
 	RtlMoveMemory(OldFindWindowWCode, fpFindWindowW, 5);
 	/*********************************************************************************************************************/
 	
 	/**************************************  FindWindowExW Init  *********************************************************/
-	//获取函数FindWindowA的地址
 	fpFindWindowExW = GetProcAddress(hModule, "FindWindowExW");
 	if(fpFindWindowExW == NULL){
 		return false;
 	}
-	//新的函数指针地址
 	fpNewFindWindowExW=(LPVOID)MyFindWindowExW;
-	NewFindWindowExWCode[0] = 0xe9;//无条件转移指令jmp的机器指令（0xe9为相对跳转、0xff为绝对跳转）
-
+	NewFindWindowExWCode[0] = 0xe9;
 	addr=(DWORD *)(NewFindWindowExWCode+1);
-	//段间的跳转指令长度为5个字节，因此JMP的指令计算公式为：目标地址-当前地址-5
 	*addr=DWORD(MyFindWindowExW)-DWORD(fpFindWindowExW)-5;
-	//将原始的函数现场进行保存
 	RtlMoveMemory(OldFindWindowExWCode, fpFindWindowExW, 5);
 	/*********************************************************************************************************************/
 	
@@ -307,7 +279,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_PROCESS_ATTACH:	//当DLL被进程 <<第一次>> 调用时，导致DllMain函数被调用
 		if(!Init())
 		{
-			//             MessageBoxA(NULL,"Init","ERROR",MB_OK);
 			return(false);
 		}
 		break;

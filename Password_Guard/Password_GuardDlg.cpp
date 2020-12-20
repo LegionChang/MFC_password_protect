@@ -21,7 +21,6 @@ LRESULT  CALLBACK ProtectKBProc(int nCode,WPARAM wParam,LPARAM lParam)
 {
 	
 	return 0;
-	//return CallNextHookEx(gHook, nCode, wParam, lParam);
 }
 
 
